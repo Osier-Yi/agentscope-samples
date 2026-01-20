@@ -371,6 +371,83 @@ bash script/start_memory_service.sh
 - **用户名**：如 `FIRST_SUPERUSER_USERNAME` 所指定 (默认: `alias`)
 - **密码**：如 `FIRST_SUPERUSER_PASSWORD` 所指定
 
+### 🌐 基础用法 -- AgentScope Runtime 部署
+
+Alias 现已适配 [AgentScope Runtime](https://github.com/agentscope-ai/agentscope-runtime/)，您可以利用 AgentScope Runtime 将 Alias 快速部署为标准后端服务。启动后，通过配套的 AgentScope Runtime API 即可轻松调用 Alias 所提供的服务。
+
+#### 1. 前期准备
+
+*   **沙盒设置与 API 密钥**：请参考前文的 [🐳 沙盒设置](#-沙盒设置可选) 和 [🔑 API 密钥配置](#-api-密钥配置) 完成基础环境配置。
+*   **配置环境变量**：从项目根目录复制示例环境文件：
+    ```bash
+    cp .env.example .env
+    ```
+*   **启动 Redis**：缓存和会话管理所需：
+    ```bash
+    docker run -d -p 6379:6379 --name alias-redis redis:7-alpine
+    ```
+
+#### 2. 安装与沙盒启动
+
+在项目根目录下，以开发模式安装包，这将自动安装 `alias_agent_runtime` 命令行工具：
+```bash
+pip install -e .
+```
+
+为了确保代码执行和文件操作等功能正常，请在另一个终端启动沙盒服务器：
+```bash
+runtime-sandbox-server --extension src/alias/runtime/alias_sandbox/alias_sandbox.py
+```
+
+#### 3. 启动 AgentScope Runtime 服务
+
+您可以根据使用场景，选择通过命令行或 Python 代码启动服务。
+
+##### 选项 A：使用命令行工具（推荐）
+使用 `alias_agent_runtime` 命令一键启动后端服务：
+
+```bash
+alias_agent_runtime --host 127.0.0.1 --port 8090 --chat-mode general
+```
+
+**参数说明**：
+*   `--host` / `--port`: 指定服务的运行地址和端口（默认端口为 8090）。
+*   `--chat-mode`: 设置运行模式，可选 `general`, `dr`, `browser`, `ds`, `finance`（默认为 `general`）。
+*   `--web-ui` : (可选) 启用 AgentScope Runtime WebUI 以开启可视化交互界面。若仅需调用 API，请忽略此参数。
+
+> **注意**：首次启动并开启 `--web-ui` 时，系统会自动安装必要的前端依赖包，可能需要花费几分钟时间，请耐心等待。
+
+##### 选项 B：使用代码启动（开发者推荐）
+如果您希望在 Python 代码中集成或自定义启动逻辑，可以参考以下示例，结合 `AliasRunner` 和 `AgentApp`：
+
+```python
+from agentscope_runtime.engine.app import AgentApp
+from alias.server.runtime.runner.alias_runner import AliasRunner
+
+# 1. 初始化 AliasRunner
+# default_chat_mode 可选: "general", "dr", "browser", "ds", "finance"
+runner = AliasRunner(
+    default_chat_mode="general",
+)
+
+# 2. 创建 AgentApp 实例
+agent_app = AgentApp(
+    runner=runner,
+    app_name="Alias",
+    app_description="An LLM-empowered agent built on AgentScope and AgentScope-Runtime",
+)
+
+# 3. 运行服务
+# 如需启用可视化调试界面，可设置 web_ui=True
+agent_app.run(host="127.0.0.1", port=8090)
+```
+
+#### 4. 访问应用程序
+
+服务启动后，您可以通过以下方式访问 Alias：
+
+*   **Runtime API 调用**：通过标准 HTTP POST 请求访问 `http://localhost:8090/process`。这是将 Alias 集成至第三方前端或后端工作流的主要方式。
+*   **可视化监控 (可选)**：若启动时开启了 `--web-ui` 参数，可通过 `http://localhost:5173` 访问 WebUI。该界面主要用于开发者观察智能体的思考过程以及工具调用轨迹等调试信息。
 
 ## ⚖️ 许可证
 
