@@ -7,6 +7,9 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 
+def _get_utc_now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
 
 @dataclass
 class MockFileBase:
@@ -16,8 +19,8 @@ class MockFileBase:
     storage_path: str
     size: int = -1
     storage_type: str = "unknown"
-    create_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    update_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    create_time: str = field(default_factory=_get_utc_now_iso)
+    update_time: str = field(default_factory=_get_utc_now_iso)
     user_id: uuid.UUID = uuid.uuid4()
 
 
@@ -68,8 +71,8 @@ class MockMessage:
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     message: Optional[dict] = None
     files: list[Any] = field(default_factory=list)
-    create_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    update_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    create_time: str = field(default_factory=_get_utc_now_iso)
+    update_time: str = field(default_factory=_get_utc_now_iso)
 
 
 class SubTaskToPrint(BaseModel):
