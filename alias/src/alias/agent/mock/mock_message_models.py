@@ -3,8 +3,9 @@
 import uuid
 from enum import Enum
 from typing import Any, Optional, Literal
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pydantic import BaseModel, Field
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -15,8 +16,8 @@ class MockFileBase:
     storage_path: str
     size: int = -1
     storage_type: str = "unknown"
-    create_time: str = "xxxyyy"
-    update_time: str = "xxxyyy"
+    create_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    update_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     user_id: uuid.UUID = uuid.uuid4()
 
 
@@ -62,12 +63,13 @@ class UserMessage(BaseMessage):
     name: str = "User"
 
 
+@dataclass
 class MockMessage:
-    id: uuid.UUID = uuid.uuid4()
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
     message: Optional[dict] = None
-    files: list[Any] = []
-    create_time: str = "xxxyyy"
-    update_time: str = "xxxyyy"
+    files: list[Any] = field(default_factory=list)
+    create_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    update_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 class SubTaskToPrint(BaseModel):
